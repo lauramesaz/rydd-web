@@ -47,7 +47,7 @@
       var w = movil ? vw * 1.75 : Math.min(vh * .82, vw * .45), h = w * 1970 / 1100;
       carro.style.setProperty("--carro-w", w + "px");
       geo.t0 = (movil ? 70 : 100) - .118 * h;
-      geo.t1 = Math.min(geo.t0, vh - 80 - .866 * h);
+      geo.t1 = Math.min(geo.t0, vh - (movil ? 120 : 250) - .866 * h);
       geo.vh = vh; pintar();
     }
     function pintar() {
@@ -55,6 +55,7 @@
       var r = viaje.getBoundingClientRect(), recorrido = r.height - geo.vh;
       var p = captura ? +captura : (reducir ? 1 : lim(-r.top / (recorrido || 1)));
       carro.style.transform = "translate3d(0," + (geo.t0 + (geo.t1 - geo.t0) * suave(lim(p / .6))) + "px,0)";
+      carro.style.setProperty("--barrido", (100 - lim(p / .7) * 100) + "%");
       var bh = suave(lim(p / .55));
       bahias.forEach(function (b, i) { var t = i < 2 ? bh : suave(lim((p - .45) / .15)); b[0].style.strokeDashoffset = b[1] * (1 - t); });
       var c = suave(lim((p - .5) / .4));
@@ -87,6 +88,35 @@
         num.textContent = Math.round(fin * e); if (q < 1) requestAnimationFrame(paso); })(performance.now());
     }, { threshold: .4 });
     om.observe(med);
+  }
+
+
+  // barra de progreso lateral y luz que sigue el cursor
+  var raiz = document.documentElement;
+  function progreso() { var t = raiz.scrollHeight - innerHeight; raiz.style.setProperty("--prog", t > 0 ? (scrollY / t).toFixed(4) : 0); }
+  window.addEventListener("scroll", progreso, { passive: true }); progreso();
+  if (window.matchMedia("(hover: hover)").matches && !reducir) {
+    window.addEventListener("pointermove", function (e) {
+      raiz.style.setProperty("--mx", e.clientX + "px"); raiz.style.setProperty("--my", e.clientY + "px");
+      document.body.classList.add("cursor-activo");
+    }, { passive: true });
+    document.addEventListener("pointerleave", function () { document.body.classList.remove("cursor-activo"); });
+  }
+
+  // mapa de la sede: se enciende al aparecer; al pasar por una posición se muestra en la ficha
+  var mapa = document.querySelector("[data-mapa] .mapa");
+  if (mapa) {
+    var fp = mapa.querySelector("[data-mp]"), fc = mapa.querySelector("[data-mc]"), bahiasM = mapa.querySelectorAll(".bahia-m");
+    function elegirBahia(b) {
+      bahiasM.forEach(function (o) { o.classList.remove("activa"); });
+      b.classList.add("activa"); fp.textContent = b.dataset.p; fc.textContent = b.dataset.eq;
+    }
+    bahiasM.forEach(function (b) { b.addEventListener("pointerenter", function () { elegirBahia(b); }); b.addEventListener("click", function () { elegirBahia(b); }); });
+    if ("IntersectionObserver" in window) {
+      var omap = new IntersectionObserver(function (en) { if (en[0].isIntersecting) { mapa.classList.add("on"); omap.disconnect(); } }, { threshold: .35 });
+      omap.observe(mapa);
+    } else mapa.classList.add("on");
+    if (captura !== null) mapa.classList.add("on");
   }
 
   // calculadora (página de tarifas)

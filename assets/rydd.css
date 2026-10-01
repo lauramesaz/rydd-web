@@ -311,3 +311,86 @@ input[type=range]{width:100%;accent-color:var(--lima);height:30px}
 .listo .puerto-aro{opacity:1;animation:late 1.6s var(--curva) infinite}
 .listo .puerto-halo{opacity:1}
 .listo .viaje-estado{color:var(--lima);text-shadow:0 0 14px rgba(210,255,0,.5)}
+
+/* ================= v4: detalles premium ================= */
+/* héroe: reflejo de luz que recorre la pintura + número pintado en el piso */
+.carro img{position:relative;z-index:1}
+.manguera{z-index:3}
+.reflejo{position:absolute;inset:0;z-index:2;pointer-events:none;mix-blend-mode:overlay;
+  background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,0) 42%,rgba(255,255,255,.34) 50%,rgba(255,255,255,0) 58%,rgba(255,255,255,0) 100%);
+  background-size:100% 320%;background-position:0 var(--barrido,100%);
+  -webkit-mask-image:radial-gradient(ellipse 30% 44% at 50% 50%,#000 55%,transparent 100%);mask-image:radial-gradient(ellipse 30% 44% at 50% 50%,#000 55%,transparent 100%)}
+.piso-num{fill:none;stroke:var(--lima);stroke-width:2;font:500 190px var(--sans);letter-spacing:-.04em;opacity:0;transition:opacity .9s var(--curva);filter:drop-shadow(0 0 10px rgba(210,255,0,.5))}
+.viaje.listo .piso-num{opacity:.4}
+
+/* luz que sigue el cursor */
+.luz-cursor{position:fixed;left:0;top:0;width:680px;height:680px;margin:-340px 0 0 -340px;border-radius:50%;pointer-events:none;z-index:45;
+  background:radial-gradient(closest-side,rgba(210,255,0,.075),rgba(210,255,0,0));mix-blend-mode:screen;opacity:0;transition:opacity .6s var(--curva);
+  transform:translate3d(var(--mx,-999px),var(--my,-999px),0)}
+.cursor-activo .luz-cursor{opacity:1}
+@media (hover:none){.luz-cursor{display:none}}
+
+/* barra de progreso lateral */
+.progreso{position:fixed;right:24px;top:50%;width:1px;height:140px;margin-top:-70px;background:var(--linea);z-index:40;pointer-events:none}
+.progreso i{display:block;width:100%;height:100%;background:var(--lima);box-shadow:var(--neon);transform-origin:top;transform:scaleY(var(--prog,0))}
+@media (max-width:900px){.progreso{display:none}}
+
+/* mapa de la sede (plano neón) */
+.mapa{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:32px;align-items:center;padding:clamp(20px,3vw,40px);border:1px solid var(--linea);border-radius:24px;
+  background:linear-gradient(rgba(210,255,0,.035) 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,rgba(210,255,0,.035) 1px,transparent 1px) 0 0/40px 40px,radial-gradient(ellipse at 40% 50%,rgba(210,255,0,.05),transparent 70%),var(--negro)}
+.mapa-svg{width:100%;height:auto;display:block}
+.mapa-svg text{font-family:var(--mono);font-weight:600}
+.lote{stroke:rgba(252,251,242,.14);stroke-width:1.5}
+.techo{stroke:rgba(210,255,0,.28);stroke-width:1;stroke-dasharray:6 8}
+.pasillo{stroke:rgba(252,251,242,.1);stroke-width:1.5;stroke-dasharray:16 12}
+.bahia-m{cursor:pointer}
+.bahia-m rect{stroke:rgba(252,251,242,.16);stroke-width:1.5;fill:rgba(252,251,242,0);transition:stroke .5s var(--curva),fill .5s var(--curva),filter .5s var(--curva);transition-delay:calc(var(--i) * 70ms)}
+.bahia-m text{fill:var(--ceniza);font-size:13px;letter-spacing:.08em;transition:fill .4s var(--curva);transition-delay:calc(var(--i) * 70ms)}
+.mapa.on .bahia-m rect{stroke:rgba(210,255,0,.75);fill:rgba(210,255,0,.035);filter:drop-shadow(0 0 5px rgba(210,255,0,.45))}
+.mapa.on .bahia-m text{fill:var(--piedra)}
+.bahia-m:hover rect,.bahia-m.activa rect{fill:rgba(210,255,0,.16)!important;stroke:var(--lima)!important;stroke-width:2.5;transition-delay:0s!important}
+.bahia-m:hover text,.bahia-m.activa text{fill:var(--lima)!important;transition-delay:0s!important}
+.cargador-m rect:first-child{fill:#1C1D21;stroke:rgba(252,251,242,.28);stroke-width:1.2}
+.cargador-m .led{fill:var(--lima);opacity:.2;transition:opacity .6s var(--curva);transition-delay:calc(var(--i) * 140ms + 300ms)}
+.mapa.on .cargador-m .led{opacity:1;filter:drop-shadow(0 0 4px rgba(210,255,0,1))}
+.cargador-m text{fill:var(--ceniza);font-size:11px;letter-spacing:.1em}
+.station-m rect{stroke:rgba(210,255,0,.5);stroke-width:1.2;fill:rgba(210,255,0,.04)}
+.station-m .t1{fill:var(--crema);font:500 17px var(--sans);letter-spacing:.24em}
+.station-m .t2{fill:var(--ceniza);font-size:10px;letter-spacing:.22em}
+.calle{fill:var(--ceniza);font-size:11px;letter-spacing:.42em}
+.mapa-ficha{display:grid;gap:0;border-top:1px solid var(--linea)}
+.mapa-ficha .eti{padding-top:16px}
+.mapa-ficha b{font:400 30px/1.1 var(--sans);letter-spacing:-.03em;padding:6px 0 16px;border-bottom:1px solid var(--linea)}
+.mapa-ficha b[data-mp]{color:var(--lima);text-shadow:0 0 18px rgba(210,255,0,.45)}
+.mapa-pie{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-top:28px;flex-wrap:wrap}
+@media (max-width:900px){.mapa{grid-template-columns:1fr}.mapa-ficha{grid-template-columns:repeat(3,1fr);border-top:0}.mapa-ficha .eti{grid-row:1}.mapa-ficha b{grid-row:2;font-size:22px;border-bottom:0;padding-bottom:0}}
+
+/* banda del carro de perfil + medidor */
+.banda-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:start}
+.banda .medidor{width:min(100%,320px);justify-self:end;margin-top:-10px}
+@media (max-width:900px){.banda-grid{grid-template-columns:1fr}.banda .medidor{justify-self:start;width:240px}}
+
+/* carta de RYDD Station */
+.carta{list-style:none;padding:0;margin:36px 0 40px;border-top:1px solid var(--linea)}
+.carta li{display:grid;grid-template-columns:34px auto 1fr auto;gap:16px;align-items:center;padding:20px 0;border-bottom:1px solid var(--linea)}
+.carta-n{font:600 11px var(--mono);color:var(--lima);letter-spacing:.1em}
+.carta-t{font:400 clamp(18px,1.7vw,22px)/1.2 var(--sans);letter-spacing:-.02em}
+.carta-l{height:1px;background:repeating-linear-gradient(90deg,rgba(252,251,242,.22) 0 2px,transparent 2px 7px)}
+.carta-e{font:500 9px/1 var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--ceniza)}
+
+/* tarjetas: borde de luz que recorre el contorno al pasar el cursor */
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+.tarjeta::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;opacity:0;transition:opacity .4s var(--curva);
+  background:conic-gradient(from var(--ang),rgba(210,255,0,0) 0 62%,rgba(210,255,0,.9) 80%,rgba(210,255,0,0) 96%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.tarjeta:hover::before{opacity:1;animation:giro 3.2s linear infinite}
+@keyframes giro{to{--ang:360deg}}
+@media (max-width:900px){
+  .banda{display:block;min-height:0}
+  .banda > img{position:relative;inset:auto;margin-top:24px}
+  .banda::before{display:none}
+  .banda .caja{padding-top:110px}
+  .banda .medidor{width:220px;margin:40px 0 0}
+  .mapa-svg text{font-size:16px}
+}
+@media (max-width:900px){.banda{display:flex;flex-direction:column}.banda > img{order:2}.banda .caja{order:1}}
