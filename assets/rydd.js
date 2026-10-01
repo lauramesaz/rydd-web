@@ -63,8 +63,9 @@
       pistola.setAttribute("transform", "translate(" + b.x + " " + b.y + ") rotate(" + Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI + ")");
       viaje.classList.toggle("avanza", p > .1);
       viaje.classList.toggle("cargando", p > .42);
-      viaje.classList.toggle("conectado", c >= .999);
-      estado.textContent = c >= .999 ? "Conectado · recibiendo energía" : (c > 0 ? "Conectando…" : "Desliza para conectar");
+      var listo = p > .62;
+      viaje.classList.toggle("listo", listo);
+      estado.textContent = listo ? "Posición lista · CCS2" : (p > .1 ? "Llegando a tu posición" : "Desliza");
     }
     window.addEventListener("scroll", function () { if (!pendiente) { pendiente = true; requestAnimationFrame(pintar); } }, { passive: true });
     window.addEventListener("resize", medir);

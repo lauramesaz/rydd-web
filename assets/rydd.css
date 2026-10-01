@@ -303,3 +303,11 @@ input[type=range]{width:100%;accent-color:var(--lima);height:30px}
 @media (max-width:640px){.foto-ancha{aspect-ratio:4/3}}
 .captura .rv{opacity:1!important;transform:none!important;transition:none!important}.captura *{transition:none!important}
 @media (min-width:901px){.carro{left:59%}.viaje-estado{left:59%}}
+
+/* Manguera dibujada RETIRADA (se veía vectorizada frente al carro real).
+   Se reemplazará por una secuencia de imágenes reales generadas en Higgsfield. */
+.pilar,.cable-capa,.cable-energia,.pistola{display:none}
+.puerto-aro,.puerto-halo{opacity:0}
+.listo .puerto-aro{opacity:1;animation:late 1.6s var(--curva) infinite}
+.listo .puerto-halo{opacity:1}
+.listo .viaje-estado{color:var(--lima);text-shadow:0 0 14px rgba(210,255,0,.5)}
