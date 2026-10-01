@@ -1,122 +1,107 @@
-// RYDD · menú, aparición al hacer scroll, héroe con carro + manguera, medidor de potencia y calculadora.
+// RYDD v5 luxury · menú a pantalla completa, aparición lenta, manifiesto que se ilumina,
+// fotos con paralaje, carro que se estaciona en su posición, mapa de la sede y calculadora.
 (function () {
   var reducir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var captura = new URLSearchParams(location.search).get("captura");   // solo para tomar pantallazos
   if (captura !== null) document.documentElement.classList.add("captura");
   var lim = function (v) { return Math.max(0, Math.min(1, v)); };
   var suave = function (t) { return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; };
+  var tareas = [];   // todo lo que reacciona al scroll, en un solo requestAnimationFrame
+  var pendiente = false;
+  function alScroll() { if (!pendiente) { pendiente = true; requestAnimationFrame(function () { pendiente = false; tareas.forEach(function (f) { f(); }); }); } }
+  window.addEventListener("scroll", alScroll, { passive: true });
+  window.addEventListener("resize", alScroll);
 
-  // menú en celular
-  var hamb = document.querySelector(".hamb"), menu = document.querySelector(".menu");
-  if (hamb && menu) hamb.addEventListener("click", function () {
-    var abierto = menu.classList.toggle("abierto");
-    hamb.setAttribute("aria-expanded", abierto);
-  });
+  // menú a pantalla completa
+  var boton = document.querySelector(".boton-menu");
+  if (boton) {
+    boton.addEventListener("click", function () {
+      var abierto = document.body.classList.toggle("menu-abierto");
+      boton.setAttribute("aria-expanded", abierto);
+      boton.querySelector("b").textContent = abierto ? "Cerrar" : "Menú";
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && document.body.classList.contains("menu-abierto")) boton.click(); });
+  }
 
-  // cabecera: se vuelve sólida al bajar
+  // cabecera sólida al bajar
   var cab = document.querySelector(".cab");
-  function cabSolida() { if (cab) cab.classList.toggle("solida", window.scrollY > 40); }
-  window.addEventListener("scroll", cabSolida, { passive: true }); cabSolida();
+  tareas.push(function () { if (cab) cab.classList.toggle("solida", window.scrollY > 60); });
 
-  // aparición suave con escalonado
+  // aparición lenta
   var vistos = document.querySelectorAll(".rv");
-  if ("IntersectionObserver" in window) {
+  if ("IntersectionObserver" in window && captura === null) {
     var io = new IntersectionObserver(function (entradas) {
       entradas.forEach(function (en) {
         if (!en.isIntersecting) return;
         var el = en.target, hermanos = Array.prototype.filter.call(el.parentElement.children, function (h) { return h.classList.contains("rv"); });
-        el.style.transitionDelay = Math.max(0, hermanos.indexOf(el)) * 60 + "ms";
-        el.classList.add("vis");
-        io.unobserve(el);
+        el.style.transitionDelay = Math.max(0, hermanos.indexOf(el)) * 90 + "ms";
+        el.classList.add("vis"); io.unobserve(el);
       });
-    }, { rootMargin: "0px 0px -8% 0px" });
+    }, { rootMargin: "0px 0px -10% 0px" });
     vistos.forEach(function (el) { io.observe(el); });
   } else vistos.forEach(function (el) { el.classList.add("vis"); });
 
-  // héroe: el carro (visto desde arriba) avanza, se dibuja el puesto de carga y la manguera se conecta
+  // manifiesto: las palabras se iluminan a medida que bajas
+  var man = document.querySelector("[data-manifiesto]");
+  if (man) {
+    var pals = man.querySelectorAll(".pal");
+    tareas.push(function () {
+      var r = man.getBoundingClientRect(), vh = innerHeight;
+      var p = reducir ? 1 : lim((vh * .85 - r.top) / (r.height * .75));
+      var n = Math.round(p * pals.length);
+      pals.forEach(function (w, i) { w.classList.toggle("on", i < n); });
+    });
+  }
+
+  // paralaje lento en fotos
+  var paral = document.querySelectorAll("[data-paralaje]");
+  if (!reducir) tareas.push(function () {
+    paral.forEach(function (el) {
+      var caja = el.parentElement.getBoundingClientRect(), f = +el.dataset.paralaje;
+      if (caja.bottom < 0 || caja.top > innerHeight) return;
+      var centro = (caja.top + caja.height / 2 - innerHeight / 2);
+      el.style.transform = "translate3d(0," + (-centro * f).toFixed(1) + "px,0)";
+    });
+  });
+
+  // tu posición: el carro baja, se dibuja la bahía y la tapa de carga se ilumina
   var viaje = document.querySelector("[data-viaje]");
   if (viaje) {
-    var carro = viaje.querySelector("[data-carro]"), estado = viaje.querySelector("[data-estado]"),
-        pistola = viaje.querySelector(".pistola"), guia = viaje.querySelector(".cable-base");
-    var L = guia.getTotalLength(), geo = {}, pendiente = false;
-    var capas = viaje.querySelectorAll(".cable-capa");
-    capas.forEach(function (c) { c.style.strokeDasharray = L; });
+    var carro = viaje.querySelector("[data-carro]"), estado = viaje.querySelector("[data-estado]"), geo = {};
     var bahias = Array.prototype.map.call(viaje.querySelectorAll(".bahia"), function (b) { var l = b.getTotalLength(); b.style.strokeDasharray = l; return [b, l]; });
-    function medir() {
-      var vw = window.innerWidth, vh = window.innerHeight, movil = vw < 900;
-      var w = movil ? vw * 1.75 : Math.min(vh * .82, vw * .45), h = w * 1970 / 1100;
+    var medir = function () {
+      var vw = innerWidth, vh = innerHeight, movil = vw < 900;
+      var w = movil ? vw * 1.6 : Math.min(vh * .8, vw * .42), h = w * 1970 / 1100;
       carro.style.setProperty("--carro-w", w + "px");
-      geo.t0 = (movil ? 70 : 100) - .118 * h;
-      geo.t1 = Math.min(geo.t0, vh - (movil ? 120 : 250) - .866 * h);
-      geo.vh = vh; pintar();
-    }
-    function pintar() {
-      pendiente = false;
+      geo.t0 = (movil ? 70 : 90) - .118 * h;
+      geo.t1 = Math.min(geo.t0, vh - (movil ? 130 : 240) - .866 * h);
+      geo.vh = vh;
+    };
+    medir(); window.addEventListener("resize", medir);
+    tareas.push(function () {
       var r = viaje.getBoundingClientRect(), recorrido = r.height - geo.vh;
       var p = captura ? +captura : (reducir ? 1 : lim(-r.top / (recorrido || 1)));
-      carro.style.transform = "translate3d(0," + (geo.t0 + (geo.t1 - geo.t0) * suave(lim(p / .6))) + "px,0)";
-      carro.style.setProperty("--barrido", (100 - lim(p / .7) * 100) + "%");
-      var bh = suave(lim(p / .55));
-      bahias.forEach(function (b, i) { var t = i < 2 ? bh : suave(lim((p - .45) / .15)); b[0].style.strokeDashoffset = b[1] * (1 - t); });
-      var c = suave(lim((p - .5) / .4));
-      capas.forEach(function (k) { k.style.strokeDashoffset = L * (1 - c); });
-      var a = guia.getPointAtLength(Math.max(0, L * c - 1)), b = guia.getPointAtLength(Math.max(1, L * c));
-      pistola.setAttribute("transform", "translate(" + b.x + " " + b.y + ") rotate(" + Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI + ")");
-      viaje.classList.toggle("avanza", p > .1);
-      viaje.classList.toggle("cargando", p > .42);
-      var listo = p > .62;
+      carro.style.transform = "translate3d(0," + (geo.t0 + (geo.t1 - geo.t0) * suave(lim(p / .65))) + "px,0)";
+      carro.style.setProperty("--barrido", (100 - lim(p / .75) * 100) + "%");
+      var bh = suave(lim(p / .6));
+      bahias.forEach(function (b, i) { var t = i < 2 ? bh : suave(lim((p - .5) / .15)); b[0].style.strokeDashoffset = b[1] * (1 - t); });
+      var listo = p > .68;
+      viaje.classList.toggle("avanza", p > .08);
       viaje.classList.toggle("listo", listo);
-      estado.textContent = listo ? "Posición lista · CCS2" : (p > .1 ? "Llegando a tu posición" : "Desliza");
-    }
-    window.addEventListener("scroll", function () { if (!pendiente) { pendiente = true; requestAnimationFrame(pintar); } }, { passive: true });
-    window.addEventListener("resize", medir);
-    medir();
+      estado.textContent = listo ? "Posición lista · CCS2" : (p > .08 ? "Llegando a tu posición" : "Desliza");
+    });
   }
 
-  // medidor de potencia: el arco se llena y el número cuenta hasta el valor final
-  var med = document.querySelector("[data-medidor]");
-  if (med && "IntersectionObserver" in window) {
-    var arco = med.querySelector(".arco"), num = med.querySelector("[data-num]"), fin = +num.dataset.fin, largo = 923.6;
-    num.textContent = reducir ? fin : 0;
-    if (reducir) arco.style.strokeDashoffset = 0;
-    var om = new IntersectionObserver(function (en) {
-      if (!en[0].isIntersecting) return; om.disconnect();
-      arco.style.strokeDashoffset = 0;
-      if (reducir) return;
-      var t0 = null;
-      (function paso(t) { if (!t0) t0 = t; var q = Math.min(1, (t - t0) / 2200), e = 1 - Math.pow(1 - q, 3);
-        num.textContent = Math.round(fin * e); if (q < 1) requestAnimationFrame(paso); })(performance.now());
-    }, { threshold: .4 });
-    om.observe(med);
-  }
-
-
-  // barra de progreso lateral y luz que sigue el cursor
-  var raiz = document.documentElement;
-  function progreso() { var t = raiz.scrollHeight - innerHeight; raiz.style.setProperty("--prog", t > 0 ? (scrollY / t).toFixed(4) : 0); }
-  window.addEventListener("scroll", progreso, { passive: true }); progreso();
-  if (window.matchMedia("(hover: hover)").matches && !reducir) {
-    window.addEventListener("pointermove", function (e) {
-      raiz.style.setProperty("--mx", e.clientX + "px"); raiz.style.setProperty("--my", e.clientY + "px");
-      document.body.classList.add("cursor-activo");
-    }, { passive: true });
-    document.addEventListener("pointerleave", function () { document.body.classList.remove("cursor-activo"); });
-  }
-
-  // mapa de la sede: se enciende al aparecer; al pasar por una posición se muestra en la ficha
+  // mapa de la sede (página de Envigado)
   var mapa = document.querySelector("[data-mapa] .mapa");
   if (mapa) {
     var fp = mapa.querySelector("[data-mp]"), fc = mapa.querySelector("[data-mc]"), bahiasM = mapa.querySelectorAll(".bahia-m");
-    function elegirBahia(b) {
-      bahiasM.forEach(function (o) { o.classList.remove("activa"); });
-      b.classList.add("activa"); fp.textContent = b.dataset.p; fc.textContent = b.dataset.eq;
-    }
-    bahiasM.forEach(function (b) { b.addEventListener("pointerenter", function () { elegirBahia(b); }); b.addEventListener("click", function () { elegirBahia(b); }); });
-    if ("IntersectionObserver" in window) {
-      var omap = new IntersectionObserver(function (en) { if (en[0].isIntersecting) { mapa.classList.add("on"); omap.disconnect(); } }, { threshold: .35 });
-      omap.observe(mapa);
+    var elegir = function (b) { bahiasM.forEach(function (o) { o.classList.remove("activa"); }); b.classList.add("activa"); fp.textContent = b.dataset.p; fc.textContent = b.dataset.eq; };
+    bahiasM.forEach(function (b) { b.addEventListener("pointerenter", function () { elegir(b); }); b.addEventListener("click", function () { elegir(b); }); });
+    if ("IntersectionObserver" in window && captura === null) {
+      var om = new IntersectionObserver(function (en) { if (en[0].isIntersecting) { mapa.classList.add("on"); om.disconnect(); } }, { threshold: .3 });
+      om.observe(mapa);
     } else mapa.classList.add("on");
-    if (captura !== null) mapa.classList.add("on");
   }
 
   // calculadora (página de tarifas)
@@ -124,7 +109,7 @@
   if (calc) {
     var precio = parseFloat(calc.dataset.precio) || 0, bateria = 60;
     var desde = document.getElementById("desde"), hasta = document.getElementById("hasta");
-    function calcular() {
+    var calcular = function () {
       var d = +desde.value, h = +hasta.value;
       if (h <= d) { h = Math.min(100, d + 5); hasta.value = h; }
       var kwh = bateria * (h - d) / 100;
@@ -132,7 +117,7 @@
       document.getElementById("v-hasta").textContent = h + " %";
       document.getElementById("r-kwh").textContent = kwh.toFixed(1).replace(".", ",");
       if (precio) document.getElementById("r-pesos").textContent = "$ " + Math.round(kwh * precio).toLocaleString("es-CO");
-    }
+    };
     calc.querySelectorAll(".chip").forEach(function (c) {
       c.addEventListener("click", function () {
         calc.querySelectorAll(".chip").forEach(function (o) { o.setAttribute("aria-pressed", "false"); });
@@ -142,4 +127,6 @@
     desde.addEventListener("input", calcular); hasta.addEventListener("input", calcular);
     calcular();
   }
+
+  alScroll();
 })();
